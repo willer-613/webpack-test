@@ -1,5 +1,5 @@
 {
-    "*.{js,jsx,ts,tsx}": ["eslint", "prettier --write"],
-    "*.{less,scss}": "prettier --write",
-    "*.{js,css,json,md}": ["prettier --write"]
+  "src/**/*.{js,jsx,ts,tsx}": ["eslint", "prettier --write"],
+  "src/**/*.{less,scss}": "prettier --write",
+  "src/**/*.{js,css,json,md}": ["prettier --write"]
 }
