@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>test</title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="" />
+        <!-- <script src="https://cdn.bootcdn.net/ajax/libs/rxjs/8.0.0-alpha.3/rxjs.umd.min.js"></script> -->
+        <script src="https://unpkg.com/@reactivex/rxjs@5.0.0-beta.7/dist/global/Rx.umd.js"></script>
+        <style>
+            html,
+            body {
+                height: 100%;
+            }
+            #drag {
+                width: 100px;
+                height: 100px;
+                position: absolute;
+                background-color: red;
+                top: 0;
+                left: 0;
+            }
+            html,
+            body {
+                height: 100%;
+                background-color: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .autocomplete {
+                position: relative;
+                display: inline-block;
+                margin: 20px;
+            }
+
+            .input {
+                width: 200px;
+                border: none;
+                border-bottom: 1px solid black;
+
+                padding: 0;
+                line-height: 24px;
+                font-size: 16px;
+            }
+            .input:focus {
+                outline: none;
+                border-bottom-color: blue;
+            }
+
+            .suggest {
+                width: 200px;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                -webkit-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+            .suggest li {
+                cursor: pointer;
+                padding: 5px;
+            }
+            .suggest li:hover {
+                background-color: lightblue;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="drag"></div>
+        <div class="autocomplete">
+            <input class="input" type="search" id="search" autocomplete="off" />
+            <ul id="suggest-list" class="suggest"></ul>
+        </div>
+        <!-- <script defer>
+            // console.log(Rx);
+            // Rx.Observable.fromEvent(document.body, 'click') // 註冊監聽
+            //     .take(1) // 只取一次
+            //     .subscribe(console.log);
+
+            //创建observable
+            // create
+            // of
+            // from
+            // fromEvent
+            // fromPromise
+            // never
+            // empty
+            // throw
+            // interval
+            // timer
+            // const observable = Rx.Observable.create(async observer => {
+            //     await new Promise((res, rej) => {
+            //         setTimeout(() => {
+            //             res(observer.next('aaaa'));
+            //             // res('aaaa')
+            //         }, 2000);
+            //     });
+            //     setTimeout(() => {
+            //         observer.next('bbbb');
+            //     }, 1000);
+            //     observer.complete(11111);
+            //     // observer.error(111);
+            // });
+            const arr = ['Jerry', 'Anna', 2016, 2017, '30 days'];
+            // const observable = Rx.Observable.of('aaa', 'bbb');
+            // const observable = Rx.Observable.from(arr);
+            const click = Rx.Observable.fromEvent(document.body, 'click');
+            // const observable = Rx.Observable.interval(1000).takeUntil(click);
+            const source = click.map(e => Rx.Observable.of(1, 2, 3)).concatAll();
+            // const observable = Rx.Observable.timer(2000, 1000);
+
+            function map(source, callback) {
+                return Rx.Observable.create(observer => {
+                    return source.subscribe(
+                        value => {
+                            try {
+                                observer.next(callback(value));
+                            } catch (e) {
+                                observer.error(e);
+                            }
+                        },
+                        err => {
+                            observer.error(err);
+                        },
+                        () => {
+                            observer.complete();
+                        },
+                    );
+                });
+            }
+
+            // const newobservable = observable.mapTo(2);
+            // const newobservable = observable.map(item => item + '  kkk');
+            // const newobservable = map(observable, item => item + '  kkk');
+            // const newobservable = observable.filter(item => item.length);
+
+            console.log('start');
+
+            const subscription = source.subscribe({
+                next: value => console.log(value),
+                complete: (value, data) => console.log(value, 'end'),
+                error: value => console.log(value, 'error'),
+            });
+
+            // setTimeout(() => {
+            //     subscription.unsubscribe();
+            // }, 5000);
+            console.log('end');
+        </script> -->
+        <script>
+            const dragDOM = document.getElementById('drag');
+            const body = document.body;
+
+            const mouseDown = Rx.Observable.fromEvent(dragDOM, 'mousedown');
+            const mouseUp = Rx.Observable.fromEvent(body, 'mouseup');
+            const mouseMove = Rx.Observable.fromEvent(body, 'mousemove');
+
+            mouseDown
+                .map(event => mouseMove.takeUntil(mouseUp))
+                .concatAll()
+                .map(event => ({ x: event.clientX, y: event.clientY }))
+                .subscribe(pos => {
+                    dragDOM.style.left = pos.x + 'px';
+                    dragDOM.style.top = pos.y + 'px';
+                });
+        </script>
+        <script>
+            const url =
+                'https://zh.wikipedia.org/w/api.php?action=opensearch&format=json&limit=5&origin=*';
+
+            const getSuggestList = keyword =>
+                fetch(url + '&search=' + keyword, { method: 'GET', mode: 'cors' }).then(res =>
+                    res.json(),
+                );
+
+            const searchInput = document.getElementById('search');
+            const suggestList = document.getElementById('suggest-list');
+
+            const keyword = Rx.Observable.fromEvent(searchInput, 'input');
+            const selectItem = Rx.Observable.fromEvent(suggestList, 'click');
+
+            const render = (suggestArr = []) =>
+                (suggestList.innerHTML = suggestArr.map(item => '<li>' + item + '</li>').join(''));
+
+            keyword
+                .debounceTime(100)
+                .switchMap(
+                    e => getSuggestList(e.target.value),
+                    (e, res) => res[1],
+                )
+                .subscribe(list => render(list));
+
+            selectItem
+                .filter(e => e.target.matches('li'))
+                .map(e => e.target.innerText)
+                .subscribe(text => {
+                    searchInput.value = text;
+                    render();
+                });
+        </script>
+    </body>
+</html>
